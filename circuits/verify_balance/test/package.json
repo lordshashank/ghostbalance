@@ -1,0 +1,14 @@
+{
+  "name": "verify-balance-integration-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:integration": "node integration.mjs",
+    "test:integration:prove": "node integration.mjs --prove"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.4.0",
+    "viem": "^2.10.1"
+  }
+}
