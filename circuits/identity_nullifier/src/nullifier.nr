@@ -1,4 +1,4 @@
-use poseidon::poseidon::bn254::hash_2;
+use poseidon::poseidon2::Poseidon2;
 
 /// Converts a 32-byte big-endian array to a Field element.
 /// ECDSA r and s values are < secp256k1 order (~256 bits) but fit in bn254 field
@@ -14,7 +14,7 @@ pub fn bytes32_to_field(bytes: [u8; 32]) -> Field {
 /// Computes a deterministic nullifier from the ECDSA signature and a balance value (in wei).
 ///
 /// Splits the 64-byte signature into r (first 32 bytes) and s (last 32 bytes),
-/// then computes: nullifier = poseidon(poseidon(r, s), nullifier_balance)
+/// then computes: nullifier = poseidon2(poseidon2(r, s), nullifier_balance)
 ///
 /// This produces a stable pseudonymous identity: same signature + same balance = same nullifier.
 pub fn compute_nullifier(
@@ -31,8 +31,8 @@ pub fn compute_nullifier(
     let r_field = bytes32_to_field(r_bytes);
     let s_field = bytes32_to_field(s_bytes);
 
-    let sig_hash = hash_2([r_field, s_field]);
-    hash_2([sig_hash, nullifier_balance])
+    let sig_hash = Poseidon2::hash([r_field, s_field], 2);
+    Poseidon2::hash([sig_hash, nullifier_balance], 2)
 }
 
 // ============================================================

@@ -100,7 +100,6 @@ function parseReturnBytes32(val: unknown): string[] {
 export async function generateShardedProof(
   inputsA: CircuitAInputs,
   proofData: EthProofData,
-  chainId: number,
   blockNumber: bigint,
   publicBalance: bigint,
   nullifierBalance: bigint,
@@ -155,7 +154,6 @@ export async function generateShardedProof(
   const stateRootBytes = toByteStrings(proofData.header.stateRoot);
 
   const inputsB1: InputMap = {
-    chain_id: chainId.toString(),
     block_number: blockNumber.toString(),
     commitment_in: commitment,
     address,

@@ -1,7 +1,7 @@
 mod identity;
 mod nullifier;
 
-use poseidon::poseidon::bn254::hash_2;
+use poseidon::poseidon2::Poseidon2;
 
 fn address_to_field(address: [u8; 20]) -> Field {
     let mut result: Field = 0;
@@ -26,8 +26,8 @@ fn main(
     );
 
     // Blinded commitment binding address + nullifier_balance
-    let inner = hash_2([address_to_field(address), nullifier_balance as Field]);
-    let commitment = hash_2([inner, blinding]);
+    let inner = Poseidon2::hash([address_to_field(address), nullifier_balance as Field], 2);
+    let commitment = Poseidon2::hash([inner, blinding], 2);
 
     // Step 4: Compute nullifier
     let nullifier = nullifier::compute_nullifier(signature, nullifier_balance as Field);

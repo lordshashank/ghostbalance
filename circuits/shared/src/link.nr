@@ -1,4 +1,4 @@
-use poseidon::poseidon::bn254::hash_2;
+use poseidon::poseidon2::Poseidon2;
 
 // Convert 16 bytes from a byte array starting at `start` into a Field element
 pub fn bytes16_to_field(arr: [u8; 32], start: u32) -> Field {
@@ -31,8 +31,8 @@ pub fn compute_link(
     let ch_lo = bytes16_to_field(curr_hash, 16);
     let ah_hi = bytes16_to_field(address_hash, 0);
     let ah_lo = bytes16_to_field(address_hash, 16);
-    let h1 = hash_2([ch_hi, ch_lo]);
-    let h2 = hash_2([ah_hi, ah_lo]);
-    let h3 = hash_2([key_ptr as Field, nullifier_balance as Field]);
-    hash_2([hash_2([h1, h2]), hash_2([h3, blinding])])
+    let h1 = Poseidon2::hash([ch_hi, ch_lo], 2);
+    let h2 = Poseidon2::hash([ah_hi, ah_lo], 2);
+    let h3 = Poseidon2::hash([key_ptr as Field, nullifier_balance as Field], 2);
+    Poseidon2::hash([Poseidon2::hash([h1, h2], 2), Poseidon2::hash([h3, blinding], 2)], 2)
 }

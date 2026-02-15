@@ -23,7 +23,6 @@ type Status =
 
 interface VerifyResult {
   valid: boolean;
-  chainId: number;
   blockNumber: number;
   publicBalance: string;
   blockHash: string;
@@ -124,7 +123,6 @@ export function ProveForm() {
       const proofResult = await generateShardedProof(
         inputsA,
         proofData,
-        chain.id,
         blockNumber,
         pubBalanceWei,
         nullBalanceWei,
@@ -298,7 +296,6 @@ export function ProveForm() {
                   {result.valid ? "Proof Valid" : "Proof Invalid"}
                 </span>
               </div>
-              <Field label="Chain ID" value={result.chainId.toString()} />
               <Field
                 label="Block Number"
                 value={result.blockNumber.toString()}

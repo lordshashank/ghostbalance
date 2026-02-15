@@ -81,18 +81,18 @@ The core challenge of sharding is: how does a verifier know that 5 independent p
 
 ### 1. Commitment (A -> B1)
 
-Circuit A outputs a blinded Poseidon commitment over the user's address and nullifier balance:
+Circuit A outputs a blinded Poseidon2 commitment over the user's address and nullifier balance:
 
 ```
-inner      = Poseidon(address_as_field, nullifier_balance)
-commitment = Poseidon(inner, blinding)
+inner      = Poseidon2(address_as_field, nullifier_balance)
+commitment = Poseidon2(inner, blinding)
 ```
 
 Circuit B1 takes `commitment_in` as a **public input**, then recomputes the same commitment from its private inputs (`address`, `nullifier_balance`, `blinding`) and asserts equality. This binds the identity proven in A to the balance proven in B1-B4 without revealing the address.
 
 ### 2. Link Commitments (B1 -> B2 -> B3 -> B4)
 
-Circuits B1-B4 pass intermediate MPT traversal state through **link commitments**. Each link is a Poseidon hash over the full private state at the circuit boundary:
+Circuits B1-B4 pass intermediate MPT traversal state through **link commitments**. Each link is a Poseidon2 hash over the full private state at the circuit boundary:
 
 ```noir
 // shared/src/link.nr
@@ -103,10 +103,10 @@ pub fn compute_link(
     nullifier_balance: u128,   // private balance for nullifier
     blinding: Field,           // random blinding factor
 ) -> Field {
-    h1 = Poseidon(curr_hash_hi, curr_hash_lo)
-    h2 = Poseidon(address_hash_hi, address_hash_lo)
-    h3 = Poseidon(key_ptr, nullifier_balance)
-    Poseidon(Poseidon(h1, h2), Poseidon(h3, blinding))
+    h1 = Poseidon2(curr_hash_hi, curr_hash_lo)
+    h2 = Poseidon2(address_hash_hi, address_hash_lo)
+    h3 = Poseidon2(key_ptr, nullifier_balance)
+    Poseidon2(Poseidon2(h1, h2), Poseidon2(h3, blinding))
 }
 ```
 
@@ -141,14 +141,14 @@ The same blinding factor is used in both the commitment (A -> B1) and all link c
 2. Hashes it with keccak256
 3. Verifies the ECDSA secp256k1 signature against the provided public key
 4. Derives the Ethereum address: `keccak256(pubkey_x || pubkey_y)[12..32]`
-5. Computes `commitment = Poseidon(Poseidon(address, nullifier_balance), blinding)`
-6. Computes `nullifier = Poseidon(Poseidon(sig_r, sig_s), nullifier_balance)`
+5. Computes `commitment = Poseidon2(Poseidon2(address, nullifier_balance), blinding)`
+6. Computes `nullifier = Poseidon2(Poseidon2(sig_r, sig_s), nullifier_balance)`
 
 The nullifier is deterministic for a given wallet + balance tier, enabling double-spend prevention without revealing identity.
 
 ### Circuit B1: `balance_header`
 
-**Public inputs:** `chain_id`, `block_number`, `commitment_in`
+**Public inputs:** `block_number`, `commitment_in`
 **Private inputs:** `address`, `nullifier_balance`, `blinding`, `header_rlp`, `header_rlp_len`, `header_state_root`
 **Public outputs:** `block_hash` (Bytes32), `link_out` (Field)
 
@@ -192,7 +192,7 @@ Same circuit binary as B2, just called with `start_index = 4` and the intermedia
 
 | Data | Visibility | Why |
 |------|-----------|-----|
-| `chain_id`, `block_number` | Public | Verifier needs to know which chain/block |
+| `block_number` | Public | Verifier needs to know which block |
 | `block_hash` | Public | Proves the header is real (can check against chain) |
 | `public_balance` | Public | The threshold claim ("I have >= X ETH") |
 | `commitment` | Public | Binds identity to balance without revealing either |
@@ -211,11 +211,11 @@ A valid set of 5 proofs guarantees:
 
 1. **Identity binding**: The prover knows a private key that signed `RedactedChat:v0:identity`, and the derived address is committed in `commitment` (Circuit A).
 
-2. **Commitment consistency**: The same `(address, nullifier_balance, blinding)` tuple is used in both Circuit A (via commitment) and Circuit B1 (via commitment recomputation). Poseidon collision resistance ensures these must be identical.
+2. **Commitment consistency**: The same `(address, nullifier_balance, blinding)` tuple is used in both Circuit A (via commitment) and Circuit B1 (via commitment recomputation). Poseidon2 collision resistance ensures these must be identical.
 
 3. **State root binding**: The block header RLP-decodes to the claimed `block_number` and `state_root`, and hashes to `block_hash` (Circuit B1). The verifier can check `block_hash` against the canonical chain.
 
-4. **MPT path integrity**: The link chain `B1 -> B2 -> B3 -> B4` ensures the same `(address_hash, nullifier_balance, blinding)` threads through all MPT steps, and the traversal state (`curr_hash`, `key_ptr`) is carried faithfully. Each internal node's keccak256 hash matches the parent's reference. Poseidon collision resistance on the links prevents substituting different intermediate states.
+4. **MPT path integrity**: The link chain `B1 -> B2 -> B3 -> B4` ensures the same `(address_hash, nullifier_balance, blinding)` threads through all MPT steps, and the traversal state (`curr_hash`, `key_ptr`) is carried faithfully. Each internal node's keccak256 hash matches the parent's reference. Poseidon2 collision resistance on the links prevents substituting different intermediate states.
 
 5. **Account verification**: The MPT leaf is verified against the final traversal hash, the account RLP is decoded and field-checked, and the account's balance is asserted to be >= both `public_balance` and `nullifier_balance` (Circuit B4).
 
@@ -227,7 +227,7 @@ A Noir library vendored from [eth-proofs](https://github.com/nomad-xyz/eth-proof
 
 | Module | Purpose |
 |--------|---------|
-| `link` | `compute_link()` -- Poseidon commitment for inter-circuit linking |
+| `link` | `compute_link()` -- Poseidon2 commitment for inter-circuit linking |
 | `mpt` | `verify_node_hash()`, `extract_hash()`, `verify_leaf()` -- MPT traversal |
 | `account` | `assert_account_equals()` -- RLP decode + field assertions for account state |
 | `rlp_decode` | General RLP list decoding |
@@ -237,7 +237,7 @@ A Noir library vendored from [eth-proofs](https://github.com/nomad-xyz/eth-proof
 | `consts` | `MAX_NODE_LEN=532`, `MAX_ACCOUNT_LEAF_LEN=148`, `MAX_ACCOUNT_STATE_LEN=110`, etc. |
 | `types` | `Address=[u8;20]`, `Bytes32=[u8;32]` type aliases |
 
-All B-series circuits depend on `shared`. Circuit A is standalone (only uses `keccak256` and `poseidon` directly).
+All B-series circuits depend on `shared`. Circuit A is standalone (only uses `keccak256` and `poseidon2` directly).
 
 ## Frontend Proving Flow
 
@@ -268,7 +268,25 @@ Browser                                          Server
   |                                                 |
 ```
 
-The execution phase (steps 4-8) chains `returnValue` from each circuit as input to the next, avoiding the need for Poseidon in JavaScript. The MPT replay module (`mptReplay.ts`) computes intermediate `curr_hash`/`key_ptr` values needed for B3 and B4 inputs by replaying the path in JS using keccak256.
+The execution phase (steps 4-8) chains `returnValue` from each circuit as input to the next, avoiding the need for Poseidon2 in JavaScript. The MPT replay module (`mptReplay.ts`) computes intermediate `curr_hash`/`key_ptr` values needed for B3 and B4 inputs by replaying the path in JS using keccak256.
+
+## Future: Recursive Proof for On-Chain Verification
+
+The current system verifies 5 proofs server-side. For on-chain (Solidity) verification, submitting 5 separate proofs would be prohibitively expensive (~300K+ gas per `verifyProof` call). The path forward is **recursive proving**: a wrapper circuit that takes all 5 proofs as private inputs, verifies them, checks the link chain, and outputs a single proof.
+
+```
+Recursive circuit
+  Private inputs: proof_A, proof_B1, proof_B2, proof_B3, proof_B4 + all public inputs
+  Logic:
+    - Verify all 5 proofs
+    - Check A.commitment == B1.commitment_in
+    - Check B1.link_out == B2.link_in == ... == B4.link_in
+  Public outputs: block_number, block_hash, public_balance, nullifier
+```
+
+The smart contract then verifies a single proof. The commitment and link values become internal to the recursive circuit and never appear on-chain, which is actually a privacy improvement -- less public data exposed.
+
+Recursive proving is too heavy for the browser (the verifier circuit itself would exceed the 2^19 gate limit), so it would run on a server. This introduces no privacy leak: the server only sees the 5 proofs and their public inputs, which are the same data the current `/api/verify` endpoint already receives. The proofs are zero-knowledge -- they reveal nothing beyond the public inputs, all of which are either intentionally public (chain_id, block_number, etc.) or opaque due to blinding (commitment, links).
 
 ## File Layout
 
@@ -277,7 +295,7 @@ circuits/
   identity_nullifier/     # Circuit A (standalone)
     src/main.nr
     src/identity.nr       # ECDSA verify + address derivation
-    src/nullifier.nr      # Poseidon-based nullifier
+    src/nullifier.nr      # Poseidon2-based nullifier
   balance_header/         # Circuit B1
     src/main.nr
   balance_mpt_step/       # Circuit B2 & B3 (reused)

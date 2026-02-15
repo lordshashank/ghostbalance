@@ -8,7 +8,7 @@ RedactedChat uses [Noir](https://noir-lang.org/) ZK circuits to generate a proof
 
 1. **You control a wallet** -- by verifying an ECDSA signature over a fixed identity message (`"RedactedChat:v0:identity"`)
 2. **Your balance meets a threshold** -- by verifying the account's Ethereum state proof (block header RLP + MPT proof) entirely inside the circuit
-3. **You get a pseudonymous identity** -- a deterministic nullifier derived from `poseidon(poseidon(sig_r, sig_s), balance)`, so the same wallet + balance always produces the same identity
+3. **You get a pseudonymous identity** -- a deterministic nullifier derived from `poseidon2(poseidon2(sig_r, sig_s), balance)`, so the same wallet + balance always produces the same identity
 
 The proof reveals only: chain ID, block number, the claimed balance threshold, the block hash, and the nullifier. The address, exact balance, and private key stay hidden.
 
@@ -28,7 +28,7 @@ Circuit B3 (balance_mpt_step)     434K gates   -- MPT nodes 4-7 (same circuit)
 Circuit B4 (balance_final)        284K gates   -- remaining nodes + leaf + balance check
 ```
 
-Inter-circuit integrity is maintained through Poseidon commitments (A -> B1) and blinded link commitments (B1 -> B2 -> B3 -> B4) that bind all private state across circuits.
+Inter-circuit integrity is maintained through Poseidon2 commitments (A -> B1) and blinded link commitments (B1 -> B2 -> B3 -> B4) that bind all private state across circuits.
 
 For the full design -- how linking works, what's public vs private, the soundness argument, and the shared library -- see **[circuits/ARCHITECTURE.md](circuits/ARCHITECTURE.md)**.
 
@@ -121,7 +121,7 @@ Open http://localhost:3000, connect a wallet, and generate a proof.
 
 ### Circuits
 - [keccak256](https://github.com/noir-lang/keccak256) v0.1.2 -- Keccak hash for EIP-191, address derivation, block hash, MPT node hashing
-- [poseidon](https://github.com/noir-lang/poseidon) v0.1.1 -- Poseidon hash for commitments, links, and nullifiers
+- [poseidon](https://github.com/noir-lang/poseidon) v0.1.1 -- Poseidon2 hash for commitments, links, and nullifiers
 - `shared/` -- Vendored from [eth-proofs](https://github.com/lordshashank/eth-proofs): MPT verification, RLP decoding, account state parsing
 
 ### Frontend

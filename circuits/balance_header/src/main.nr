@@ -4,7 +4,7 @@ use shared::fragment::Fragment;
 use shared::rlp_decode::decode_list;
 use shared::rlp_types::RlpList;
 use keccak256::keccak256;
-use poseidon::poseidon::bn254::hash_2;
+use poseidon::poseidon2::Poseidon2;
 
 global MAX_HEADER_RLP_LEN: u32 = 708;
 global MAX_HEADER_FIELDS: u32 = 20;
@@ -13,7 +13,6 @@ global BLOCK_NUM_INDEX: u32 = 8;
 
 fn main(
     // Public inputs
-    chain_id: pub u32,
     block_number: pub u64,
     commitment_in: pub Field,
 
@@ -27,11 +26,16 @@ fn main(
 ) -> pub (Bytes32, Field) {
     // 1. Verify commitment matches Circuit A
     let addr_field = address_to_field(address);
-    let inner = hash_2([addr_field, nullifier_balance as Field]);
-    let recomputed = hash_2([inner, blinding]);
+    let inner = Poseidon2::hash([addr_field, nullifier_balance as Field], 2);
+    let recomputed = Poseidon2::hash([inner, blinding], 2);
     assert(recomputed == commitment_in, "Commitment mismatch");
 
     // 2. Verify block header RLP
+    // MAX_HEADER_FIELDS = 20 supports Sepolia and post-Cancun mainnet (block >= 19,426,587).
+    // Pre-Cancun mainnet headers have fewer fields (15-17) but decode_list still works since
+    // we only read indices 3 (state_root) and 8 (block_number), which exist in all forks.
+    // The block header does not contain chain_id; chain identity is verified off-circuit
+    // by checking the public block_hash output against the canonical chain.
     let header_fragment = Fragment::new_with_length(header_rlp_len, header_rlp);
     let header_fields: RlpList<MAX_HEADER_FIELDS> = decode_list(header_fragment);
 

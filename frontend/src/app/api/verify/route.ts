@@ -35,23 +35,22 @@ function decodePublicInputsA(publicInputs: string[]) {
 }
 
 // Decode public inputs from Circuit B1:
-// Public inputs: chain_id, block_number, commitment_in, block_hash[0..31], link_out
-// Total: 3 + 32 + 1 = 36
+// Public inputs: block_number, commitment_in, block_hash[0..31], link_out
+// Total: 2 + 32 + 1 = 35
 function decodePublicInputsB1(publicInputs: string[]) {
-  const chainId = Number(BigInt(publicInputs[0]));
-  const blockNumber = Number(BigInt(publicInputs[1]));
-  const commitmentIn = publicInputs[2];
+  const blockNumber = Number(BigInt(publicInputs[0]));
+  const commitmentIn = publicInputs[1];
 
-  // block_hash is 32 bytes (indices 3-34)
-  const blockHashBytes = publicInputs.slice(3, 35).map((v) => {
+  // block_hash is 32 bytes (indices 2-33)
+  const blockHashBytes = publicInputs.slice(2, 34).map((v) => {
     const n = Number(BigInt(v));
     return n.toString(16).padStart(2, "0");
   });
   const blockHash = "0x" + blockHashBytes.join("");
 
-  const linkOut = publicInputs[35];
+  const linkOut = publicInputs[34];
 
-  return { chainId, blockNumber, commitmentIn, blockHash, linkOut };
+  return { blockNumber, commitmentIn, blockHash, linkOut };
 }
 
 // Decode public inputs from Circuit B2/B3: [link_in, link_out]
@@ -167,7 +166,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       valid: true,
-      chainId: decodedB1.chainId,
       blockNumber: decodedB1.blockNumber,
       publicBalance: decodedB4.publicBalance,
       blockHash: decodedB1.blockHash,

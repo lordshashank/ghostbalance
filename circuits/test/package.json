@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@noble/curves": "^1.4.0",
-    "circomlibjs": "^0.1.7",
+    "@aztec/bb.js": "^3.0.0",
     "viem": "^2.10.1"
   }
 }

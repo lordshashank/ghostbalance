@@ -6,6 +6,7 @@ frontend/.next/
 frontend/out/
 frontend/build/
 **/target/
+**/Prover.toml
 
 # Environment
 .env
