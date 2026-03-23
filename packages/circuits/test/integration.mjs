@@ -57,7 +57,7 @@ async function signIdentityMessage(privateKey) {
   const account = privateKeyToAccount(privateKey);
   log(`Account address: ${account.address}`);
 
-  const message = 'RedactedChat:v0:identity';
+  const message = 'ghostbalance:v0:identity';
   const signature = await account.signMessage({ message });
   log(`Signed identity message`);
 

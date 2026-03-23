@@ -1,12 +1,12 @@
-# RedactedChat
+# GhostBalance
 
 Privacy-preserving chat identity using zero-knowledge proofs. Users prove they hold a minimum ETH balance without revealing their address or exact balance.
 
 ## How It Works
 
-RedactedChat uses [Noir](https://noir-lang.org/) ZK circuits to generate a proof that:
+GhostBalance uses [Noir](https://noir-lang.org/) ZK circuits to generate a proof that:
 
-1. **You control a wallet** -- by verifying an ECDSA signature over a fixed identity message (`"RedactedChat:v0:identity"`)
+1. **You control a wallet** -- by verifying an ECDSA signature over a fixed identity message (`"ghostbalance:v0:identity"`)
 2. **Your balance meets a threshold** -- by verifying the account's Ethereum state proof (block header RLP + MPT proof) entirely inside the circuit
 3. **You get a pseudonymous identity** -- a deterministic nullifier derived from `poseidon2(poseidon2(sig_r, sig_s), balance)`, so the same wallet + balance always produces the same identity
 
@@ -35,7 +35,7 @@ For the full design -- how linking works, what's public vs private, the soundnes
 ## Project Structure
 
 ```
-redactedchat/
+ghostbalance/
 ├── packages/
 │   ├── circuits/
 │   │   ├── ARCHITECTURE.md           # Detailed sharding design doc

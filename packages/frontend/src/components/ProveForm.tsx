@@ -198,7 +198,7 @@ export function ProveForm() {
   return (
     <div className="max-w-lg mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">RedactedChat</h1>
+        <h1 className="text-2xl font-bold">GhostBalance</h1>
         <ConnectButton />
       </div>
 

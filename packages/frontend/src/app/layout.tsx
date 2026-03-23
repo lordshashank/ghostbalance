@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RedactedChat",
+  title: "GhostBalance",
   description: "ZK balance proof for anonymous chat",
 };
 

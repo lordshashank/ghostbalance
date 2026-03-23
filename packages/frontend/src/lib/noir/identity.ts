@@ -1,6 +1,6 @@
 import { hashMessage, recoverPublicKey, type Hex } from "viem";
 
-export const IDENTITY_MESSAGE = "RedactedChat:v0:identity";
+export const IDENTITY_MESSAGE = "ghostbalance:v0:identity";
 
 export interface IdentityData {
   pubKeyX: string[]; // 32 bytes as hex strings

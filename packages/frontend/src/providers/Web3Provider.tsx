@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@rainbow-me/rainbowkit/styles.css";
 
 const config = getDefaultConfig({
-  appName: "RedactedChat",
+  appName: "GhostBalance",
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "PLACEHOLDER",
   chains: [sepolia, mainnet],
   ssr: true,

@@ -1,6 +1,6 @@
 # Sharded Circuit Architecture
 
-RedactedChat proves ETH balance ownership in the browser without revealing the user's address or exact balance. The proof runs entirely client-side using [Noir](https://noir-lang.org/) circuits compiled to UltraHonk and proved via bb.js WASM.
+GhostBalance proves ETH balance ownership in the browser without revealing the user's address or exact balance. The proof runs entirely client-side using [Noir](https://noir-lang.org/) circuits compiled to UltraHonk and proved via bb.js WASM.
 
 ## Why Shard?
 
@@ -137,7 +137,7 @@ The same blinding factor is used in both the commitment (A -> B1) and all link c
 **Private inputs:** `signature`, `public_key_x`, `public_key_y`, `nullifier_balance`, `blinding`
 **Public outputs:** `commitment`, `nullifier`
 
-1. Constructs the EIP-191 prefixed message: `\x19Ethereum Signed Message:\n24` + `RedactedChat:v0:identity`
+1. Constructs the EIP-191 prefixed message: `\x19Ethereum Signed Message:\n24` + `ghostbalance:v0:identity`
 2. Hashes it with keccak256
 3. Verifies the ECDSA secp256k1 signature against the provided public key
 4. Derives the Ethereum address: `keccak256(pubkey_x || pubkey_y)[12..32]`
@@ -209,7 +209,7 @@ Same circuit binary as B2, just called with `start_index = 4` and the intermedia
 
 A valid set of 5 proofs guarantees:
 
-1. **Identity binding**: The prover knows a private key that signed `RedactedChat:v0:identity`, and the derived address is committed in `commitment` (Circuit A).
+1. **Identity binding**: The prover knows a private key that signed `ghostbalance:v0:identity`, and the derived address is committed in `commitment` (Circuit A).
 
 2. **Commitment consistency**: The same `(address, nullifier_balance, blinding)` tuple is used in both Circuit A (via commitment) and Circuit B1 (via commitment recomputation). Poseidon2 collision resistance ensures these must be identical.
 
@@ -244,7 +244,7 @@ All B-series circuits depend on `eth_primitives`. Circuit A is standalone (only 
 ```
 Browser                                          Server
   |                                                 |
-  |  1. Sign "RedactedChat:v0:identity"             |
+  |  1. Sign "ghostbalance:v0:identity"             |
   |  2. Recover pubkey from signature               |
   |  3. Fetch block header + account proof (RPC)    |
   |  4. Execute A  -> (commitment, nullifier)       |
