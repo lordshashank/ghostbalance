@@ -27,6 +27,7 @@ function blockToHeaderFields(block) {
   if (block.blobGasUsed != null) fields.push(toHex(block.blobGasUsed));
   if (block.excessBlobGas != null) fields.push(toHex(block.excessBlobGas));
   if (block.parentBeaconBlockRoot) fields.push(block.parentBeaconBlockRoot);
+  if (block.requestsHash) fields.push(block.requestsHash);
   return fields;
 }
 

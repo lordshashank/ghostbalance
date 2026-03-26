@@ -1,7 +1,7 @@
 pub global MAX_NODE_LEN: u32 = 532;
 pub global MAX_ACCOUNT_LEAF_LEN: u32 = 148;
 pub global MAX_ACCOUNT_STATE_LEN: u32 = 110;
-pub global MAX_HEADER_RLP_LEN: u32 = 708;
+pub global MAX_HEADER_RLP_LEN: u32 = 741;
 pub global MAX_KEY_LEN: u32 = 32;
 pub global MAX_PREFIXED_KEY_NIBBLE_LEN: u32 = 66; // (MAX_KEY_LEN + 1) * 2
 pub global MAX_ACCOUNT_DEPTH_NO_LEAF: u32 = 10;

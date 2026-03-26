@@ -84,11 +84,11 @@ The core challenge of sharding is: how does a verifier know that 5 independent p
 Circuit A outputs a blinded Poseidon2 commitment over the user's address and nullifier balance:
 
 ```
-inner      = Poseidon2(address_as_field, nullifier_balance)
+inner      = Poseidon2(address_as_field, nullifier_seed)
 commitment = Poseidon2(inner, blinding)
 ```
 
-Circuit B1 takes `commitment_in` as a **public input**, then recomputes the same commitment from its private inputs (`address`, `nullifier_balance`, `blinding`) and asserts equality. This binds the identity proven in A to the balance proven in B1-B4 without revealing the address.
+Circuit B1 takes `commitment_in` as a **public input**, then recomputes the same commitment from its private inputs (`address`, `nullifier_seed`, `blinding`) and asserts equality. This binds the identity proven in A to the balance proven in B1-B4 without revealing the address.
 
 ### 2. Link Commitments (B1 -> B2 -> B3 -> B4)
 
@@ -100,12 +100,12 @@ pub fn compute_link(
     curr_hash: [u8; 32],       // current MPT node hash
     address_hash: [u8; 32],    // keccak256(address)
     key_ptr: u32,              // position in MPT key nibbles
-    nullifier_balance: u128,   // private balance for nullifier
+    nullifier_seed: u128,   // private balance for nullifier
     blinding: Field,           // random blinding factor
 ) -> Field {
     h1 = Poseidon2(curr_hash_hi, curr_hash_lo)
     h2 = Poseidon2(address_hash_hi, address_hash_lo)
-    h3 = Poseidon2(key_ptr, nullifier_balance)
+    h3 = Poseidon2(key_ptr, nullifier_seed)
     Poseidon2(Poseidon2(h1, h2), Poseidon2(h3, blinding))
 }
 ```
@@ -134,34 +134,36 @@ The same blinding factor is used in both the commitment (A -> B1) and all link c
 
 ### Circuit A: `identity_nullifier`
 
-**Private inputs:** `signature`, `public_key_x`, `public_key_y`, `nullifier_balance`, `blinding`
+**Private inputs:** `signature`, `public_key_x`, `public_key_y`, `nullifier_seed`, `blinding`
 **Public outputs:** `commitment`, `nullifier`
 
 1. Constructs the EIP-191 prefixed message: `\x19Ethereum Signed Message:\n24` + `ghostbalance:v0:identity`
 2. Hashes it with keccak256
 3. Verifies the ECDSA secp256k1 signature against the provided public key
 4. Derives the Ethereum address: `keccak256(pubkey_x || pubkey_y)[12..32]`
-5. Computes `commitment = Poseidon2(Poseidon2(address, nullifier_balance), blinding)`
-6. Computes `nullifier = Poseidon2(Poseidon2(sig_r, sig_s), nullifier_balance)`
+5. Computes `commitment = Poseidon2(Poseidon2(address, nullifier_seed), blinding)`
+6. Computes `nullifier = Poseidon2(Poseidon2(sig_r, sig_s), nullifier_seed)`
 
-The nullifier is deterministic for a given wallet + balance tier, enabling double-spend prevention without revealing identity.
+The nullifier is deterministic for a given wallet + nullifier_seed pair. Because Ethereum uses deterministic ECDSA (RFC 6979), re-signing the same message with the same wallet always produces the same `(r, s)` values, making the nullifier stable across proof sessions.
+
+**Nullifier balance vs public balance:** The `nullifier_seed` is a private value used solely for nullifier derivation and inter-circuit linking. It is decoupled from the `public_balance` (the user's publicly claimed balance threshold). By default, they are set to the same value at registration, but advanced users can configure a different nullifier_seed. This value must remain constant across reproves to preserve the same nullifier (identity). It is never constrained against the on-chain balance -- only `public_balance` is.
 
 ### Circuit B1: `balance_header`
 
 **Public inputs:** `block_number`, `commitment_in`
-**Private inputs:** `address`, `nullifier_balance`, `blinding`, `header_rlp`, `header_rlp_len`, `header_state_root`
+**Private inputs:** `address`, `nullifier_seed`, `blinding`, `header_rlp`, `header_rlp_len`, `header_state_root`
 **Public outputs:** `block_hash` (Bytes32), `link_out` (Field)
 
 1. Recomputes commitment from private inputs; asserts it matches `commitment_in`
-2. RLP-decodes the block header, asserts `block_number` and `state_root` match
+2. RLP-decodes the block header (up to 21 fields, supporting post-Pectra headers with EIP-7685 `requestsHash`), asserts `block_number` (index 8) and `state_root` (index 3) match. Pre-Pectra headers with fewer fields (15-20) decode correctly since only indices 3 and 8 are read.
 3. Computes `block_hash = keccak256(header_rlp)`
 4. Computes `address_hash = keccak256(address)`
-5. Outputs `link_out = compute_link(state_root, address_hash, 0, nullifier_balance, blinding)`
+5. Outputs `link_out = compute_link(state_root, address_hash, 0, nullifier_seed, blinding)`
 
 ### Circuit B2: `balance_mpt_step` (nodes 0-3)
 
 **Public inputs:** `link_in`
-**Private inputs:** `curr_hash`, `address_hash`, `key_ptr_in`, `nullifier_balance`, `blinding`, `depth`, `start_index`, `nodes[4][532]`
+**Private inputs:** `curr_hash`, `address_hash`, `key_ptr_in`, `nullifier_seed`, `blinding`, `depth`, `start_index`, `nodes[4][532]`
 **Public outputs:** `link_out` (Field)
 
 1. Asserts `compute_link(curr_hash, address_hash, key_ptr_in, ...) == link_in`
@@ -178,7 +180,7 @@ Same circuit binary as B2, just called with `start_index = 4` and the intermedia
 ### Circuit B4: `balance_final`
 
 **Public inputs:** `link_in`, `public_balance`
-**Private inputs:** `curr_hash`, `address_hash`, `key_ptr_in`, `nullifier_balance`, `blinding`, `depth`, `nodes[2][532]`, `leaf[148]`, `account_value[110]`, `account_nonce`, `account_balance`, `account_storage_root`, `account_code_hash`
+**Private inputs:** `curr_hash`, `address_hash`, `key_ptr_in`, `nullifier_seed`, `blinding`, `depth`, `nodes[2][532]`, `leaf[148]`, `account_value[110]`, `account_nonce`, `account_balance`, `account_storage_root`, `account_code_hash`
 **Public outputs:** none (all assertions, no return value)
 
 1. Asserts link_in matches
@@ -186,7 +188,8 @@ Same circuit binary as B2, just called with `start_index = 4` and the intermedia
 3. Verifies the MPT leaf: `keccak256(leaf) == curr_hash`, key nibbles consumed
 4. Verifies account RLP: decodes `account_value` and asserts fields match (`nonce`, `balance`, `storage_root`, `code_hash`)
 5. Asserts `public_balance <= account_balance` (the public threshold claim)
-6. Asserts `nullifier_balance <= account_balance` (the private nullifier claim)
+
+Note: `nullifier_seed` is intentionally **not** constrained against `account_balance`. It serves only as a private seed for nullifier derivation and inter-circuit linking. This allows users to reprove with a new `public_balance` (reflecting balance changes) without the risk of being locked out if their on-chain balance drops below the original `nullifier_seed`.
 
 ## Public vs Private Data
 
@@ -200,7 +203,7 @@ Same circuit binary as B2, just called with `start_index = 4` and the intermedia
 | `link_in`, `link_out` | Public | Chain integrity between sub-circuits |
 | `address` | Private | The whole point -- address stays hidden |
 | `signature`, `public_key` | Private | Would reveal the address |
-| `nullifier_balance` | Private | Could narrow down identity if revealed |
+| `nullifier_seed` | Private | Private seed for nullifier derivation and link binding; not constrained against on-chain balance |
 | `blinding` | Private | Protects commitment and links from brute-force |
 | `header_rlp`, `state_root` | Private | Prevents linking proof to specific state trie path |
 | MPT nodes, leaf, account | Private | Would reveal the address via the trie path |
@@ -211,13 +214,13 @@ A valid set of 5 proofs guarantees:
 
 1. **Identity binding**: The prover knows a private key that signed `ghostbalance:v0:identity`, and the derived address is committed in `commitment` (Circuit A).
 
-2. **Commitment consistency**: The same `(address, nullifier_balance, blinding)` tuple is used in both Circuit A (via commitment) and Circuit B1 (via commitment recomputation). Poseidon2 collision resistance ensures these must be identical.
+2. **Commitment consistency**: The same `(address, nullifier_seed, blinding)` tuple is used in both Circuit A (via commitment) and Circuit B1 (via commitment recomputation). Poseidon2 collision resistance ensures these must be identical.
 
 3. **State root binding**: The block header RLP-decodes to the claimed `block_number` and `state_root`, and hashes to `block_hash` (Circuit B1). The verifier can check `block_hash` against the canonical chain.
 
-4. **MPT path integrity**: The link chain `B1 -> B2 -> B3 -> B4` ensures the same `(address_hash, nullifier_balance, blinding)` threads through all MPT steps, and the traversal state (`curr_hash`, `key_ptr`) is carried faithfully. Each internal node's keccak256 hash matches the parent's reference. Poseidon2 collision resistance on the links prevents substituting different intermediate states.
+4. **MPT path integrity**: The link chain `B1 -> B2 -> B3 -> B4` ensures the same `(address_hash, nullifier_seed, blinding)` threads through all MPT steps, and the traversal state (`curr_hash`, `key_ptr`) is carried faithfully. Each internal node's keccak256 hash matches the parent's reference. Poseidon2 collision resistance on the links prevents substituting different intermediate states.
 
-5. **Account verification**: The MPT leaf is verified against the final traversal hash, the account RLP is decoded and field-checked, and the account's balance is asserted to be >= both `public_balance` and `nullifier_balance` (Circuit B4).
+5. **Account verification**: The MPT leaf is verified against the final traversal hash, the account RLP is decoded and field-checked, and the account's balance is asserted to be >= `public_balance` (Circuit B4). The `nullifier_seed` is not constrained against the on-chain balance -- it functions as a private seed threaded through the link chain for binding, not as a balance claim.
 
 6. **No oracle trust**: All Ethereum data (block header, state proof) is pre-fetched in JavaScript and passed as private circuit inputs. The circuits verify everything cryptographically -- no trusted oracle.
 
@@ -269,6 +272,30 @@ Browser                                          Server
 ```
 
 The execution phase (steps 4-8) chains `returnValue` from each circuit as input to the next, avoiding the need for Poseidon2 in JavaScript. The MPT replay module (`mptReplay.ts`) computes intermediate `curr_hash`/`key_ptr` values needed for B3 and B4 inputs by replaying the path in JS using keccak256.
+
+## Balance Updates (Reprove)
+
+A user can update their publicly displayed balance without changing their identity. The key insight: `nullifier = Poseidon2(Poseidon2(sig_r, sig_s), nullifier_seed)`. Since Ethereum uses deterministic ECDSA, re-signing the same message produces the same `(r, s)`. Combined with the same `nullifier_seed`, this yields the same nullifier -- the server recognizes the user and updates their `public_balance`.
+
+**Registration flow:**
+1. User signs identity message, chooses `public_balance` (and optionally a different `nullifier_seed` via advanced options)
+2. Generates 5 proofs with `nullifier_seed` as seed
+3. Backend stores `public_balance` and `initial_balance` (= first `public_balance`, used as recovery hint for default-flow users)
+4. `nullifier_seed` is persisted client-side only (localStorage)
+
+**Update balance flow:**
+1. User re-signs identity message (same deterministic signature)
+2. Loads stored `nullifier_seed` from localStorage (falls back to backend `initial_balance`)
+3. Enters new `public_balance`
+4. Generates 5 proofs with same `nullifier_seed` + new `public_balance` + fresh `blinding`
+5. Backend verifies proofs, sees same nullifier, updates `public_balance`
+
+**New identity flow:**
+1. User generates a completely new proof with a different `nullifier_seed`
+2. This produces a different nullifier -- the backend sees it as a new user
+3. Old profile is unlinked (different nullifier)
+
+The `blinding` factor is always fresh per session -- it does not need to be the same across reproves. Only `nullifier_seed` (and the deterministic signature) must stay constant to preserve the nullifier.
 
 ## Future: Recursive Proof for On-Chain Verification
 

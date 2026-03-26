@@ -15,7 +15,7 @@ fn main(
     curr_hash: Bytes32,
     address_hash: Bytes32,
     key_ptr_in: u32,
-    nullifier_balance: u128,
+    nullifier_seed: u128,
     blinding: Field,
     depth: u64,
     start_index: u64,
@@ -23,7 +23,7 @@ fn main(
 ) -> pub Field {
     // Verify incoming link
     assert(
-        compute_link(curr_hash, address_hash, key_ptr_in, nullifier_balance, blinding) == link_in,
+        compute_link(curr_hash, address_hash, key_ptr_in, nullifier_seed, blinding) == link_in,
         "Link mismatch",
     );
 
@@ -51,5 +51,5 @@ fn main(
     }
 
     // Compute outgoing link
-    compute_link(hash, address_hash, kp, nullifier_balance, blinding)
+    compute_link(hash, address_hash, kp, nullifier_seed, blinding)
 }

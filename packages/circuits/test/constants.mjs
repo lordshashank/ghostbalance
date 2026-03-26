@@ -45,7 +45,7 @@ export const CIRCUIT_B4_DIR = resolve(__dirname, '..', 'balance_final');
 export const PRIVATE_KEY = process.env.PRIVATE_KEY;
 export const CHAIN_ID = parseInt(process.env.CHAIN_ID || '11155111', 10);
 export const PUBLIC_BALANCE_ETH = process.env.PUBLIC_BALANCE || '0.001';
-export const NULLIFIER_BALANCE_ETH = process.env.NULLIFIER_BALANCE || PUBLIC_BALANCE_ETH;
+export const NULLIFIER_SEED_ETH = process.env.NULLIFIER_SEED || PUBLIC_BALANCE_ETH;
 export const BLOCK_NUMBER = process.env.BLOCK_NUMBER ? BigInt(process.env.BLOCK_NUMBER) : null;
 export const PROVE_MODE = process.argv.includes('--prove');
 

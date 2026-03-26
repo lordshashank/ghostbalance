@@ -14,12 +14,12 @@ pub fn bytes32_to_field(bytes: [u8; 32]) -> Field {
 /// Computes a deterministic nullifier from the ECDSA signature and a balance value (in wei).
 ///
 /// Splits the 64-byte signature into r (first 32 bytes) and s (last 32 bytes),
-/// then computes: nullifier = poseidon2(poseidon2(r, s), nullifier_balance)
+/// then computes: nullifier = poseidon2(poseidon2(r, s), nullifier_seed)
 ///
 /// This produces a stable pseudonymous identity: same signature + same balance = same nullifier.
 pub fn compute_nullifier(
     signature: [u8; 64],
-    nullifier_balance: Field,
+    nullifier_seed: Field,
 ) -> Field {
     let mut r_bytes: [u8; 32] = [0; 32];
     let mut s_bytes: [u8; 32] = [0; 32];
@@ -32,7 +32,7 @@ pub fn compute_nullifier(
     let s_field = bytes32_to_field(s_bytes);
 
     let sig_hash = Poseidon2::hash([r_field, s_field], 2);
-    Poseidon2::hash([sig_hash, nullifier_balance], 2)
+    Poseidon2::hash([sig_hash, nullifier_seed], 2)
 }
 
 // ============================================================

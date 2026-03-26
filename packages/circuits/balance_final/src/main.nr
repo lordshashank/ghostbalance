@@ -16,7 +16,7 @@ fn main(
     curr_hash: Bytes32,
     address_hash: Bytes32,
     key_ptr_in: u32,
-    nullifier_balance: u128,
+    nullifier_seed: u128,
     blinding: Field,
     depth: u64,
     nodes: [[u8; MAX_NODE_LEN]; REMAINING_NODES],
@@ -29,7 +29,7 @@ fn main(
 ) {
     // 1. Verify incoming link
     assert(
-        compute_link(curr_hash, address_hash, key_ptr_in, nullifier_balance, blinding) == link_in,
+        compute_link(curr_hash, address_hash, key_ptr_in, nullifier_seed, blinding) == link_in,
         "Link mismatch",
     );
 
@@ -67,8 +67,7 @@ fn main(
         account_code_hash,
     );
 
-    // 6. Balance checks
+    // 6. Balance check
     let balance_wei: u128 = account_balance as u128;
     assert(public_balance <= balance_wei, "public_balance exceeds actual balance");
-    assert(nullifier_balance <= balance_wei, "nullifier_balance exceeds actual balance");
 }

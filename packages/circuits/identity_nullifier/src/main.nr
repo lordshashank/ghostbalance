@@ -13,7 +13,7 @@ fn address_to_field(address: [u8; 20]) -> Field {
 
 fn main(
     // All private inputs
-    nullifier_balance: u128,
+    nullifier_seed: u128,
     signature: [u8; 64],
     public_key_x: [u8; 32],
     public_key_y: [u8; 32],
@@ -25,12 +25,12 @@ fn main(
         signature, public_key_x, public_key_y,
     );
 
-    // Blinded commitment binding address + nullifier_balance
-    let inner = Poseidon2::hash([address_to_field(address), nullifier_balance as Field], 2);
+    // Blinded commitment binding address + nullifier_seed
+    let inner = Poseidon2::hash([address_to_field(address), nullifier_seed as Field], 2);
     let commitment = Poseidon2::hash([inner, blinding], 2);
 
     // Step 4: Compute nullifier
-    let nullifier = nullifier::compute_nullifier(signature, nullifier_balance as Field);
+    let nullifier = nullifier::compute_nullifier(signature, nullifier_seed as Field);
 
     (commitment, nullifier)
 }

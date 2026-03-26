@@ -6,8 +6,8 @@ use eth_primitives::rlp_types::RlpList;
 use keccak256::keccak256;
 use poseidon::poseidon2::Poseidon2;
 
-global MAX_HEADER_RLP_LEN: u32 = 708;
-global MAX_HEADER_FIELDS: u32 = 20;
+global MAX_HEADER_RLP_LEN: u32 = 741;
+global MAX_HEADER_FIELDS: u32 = 21;
 global STATE_ROOT_INDEX: u32 = 3;
 global BLOCK_NUM_INDEX: u32 = 8;
 
@@ -18,7 +18,7 @@ fn main(
 
     // Private inputs
     address: Address,
-    nullifier_balance: u128,
+    nullifier_seed: u128,
     blinding: Field,
     header_rlp: [u8; MAX_HEADER_RLP_LEN],
     header_rlp_len: u32,
@@ -26,13 +26,13 @@ fn main(
 ) -> pub (Bytes32, Field) {
     // 1. Verify commitment matches Circuit A
     let addr_field = address_to_field(address);
-    let inner = Poseidon2::hash([addr_field, nullifier_balance as Field], 2);
+    let inner = Poseidon2::hash([addr_field, nullifier_seed as Field], 2);
     let recomputed = Poseidon2::hash([inner, blinding], 2);
     assert(recomputed == commitment_in, "Commitment mismatch");
 
     // 2. Verify block header RLP
-    // MAX_HEADER_FIELDS = 20 supports Sepolia and post-Cancun mainnet (block >= 19,426,587).
-    // Pre-Cancun mainnet headers have fewer fields (15-17) but decode_list still works since
+    // MAX_HEADER_FIELDS = 21 supports post-Pectra (EIP-7685 requestsHash) on Sepolia and mainnet.
+    // Pre-Pectra headers have fewer fields (15-20) but decode_list still works since
     // we only read indices 3 (state_root) and 8 (block_number), which exist in all forks.
     // The block header does not contain chain_id; chain identity is verified off-circuit
     // by checking the public block_hash output against the canonical chain.
@@ -51,7 +51,7 @@ fn main(
     let address_hash: Bytes32 = keccak256(address, 20);
 
     // 5. Compute link_out: state_root is curr_hash for first MPT step, key_ptr starts at 0
-    let link_out = compute_link(header_state_root, address_hash, 0, nullifier_balance, blinding);
+    let link_out = compute_link(header_state_root, address_hash, 0, nullifier_seed, blinding);
 
     (block_hash, link_out)
 }
