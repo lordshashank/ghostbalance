@@ -1,0 +1,23 @@
+{
+  "name": "@ghostbalance/backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "tsx --test tests/**/*.test.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1014.0",
+    "@aws-sdk/s3-request-presigner": "^3.1014.0",
+    "@aztec/bb.js": "3.0.0-nightly.20251104",
+    "pg": "8.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "@types/pg": "8.18.0",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
+  }
+}
