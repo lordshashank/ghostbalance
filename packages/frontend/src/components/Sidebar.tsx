@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: "/profile", icon: "person", label: "Profile" },
   { href: "/leaderboard", icon: "leaderboard", label: "Leaderboard" },
   { href: "/bookmarks", icon: "bookmark", label: "Bookmarks" },
+  { href: "/about", icon: "info", label: "About" },
   { href: "/settings", icon: "settings", label: "Settings" },
 ];
 

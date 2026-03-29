@@ -8,7 +8,7 @@
   "scripts": {
     "build:circuits": "./scripts/build-circuits.sh",
     "dev": "npm run dev --workspace=packages/frontend",
-    "build": "npm run build:circuits && npm run build --workspace=packages/frontend",
+    "build": "npm run build:circuits && npm run build --workspace=packages/frontend && npm run build --workspace=packages/backend",
     "test:integration": "npm run test:integration --workspace=packages/circuits",
     "test:integration:prove": "npm run test:integration:prove --workspace=packages/circuits"
   }

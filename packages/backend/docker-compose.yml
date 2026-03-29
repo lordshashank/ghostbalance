@@ -1,10 +1,12 @@
+# Dev: docker compose up
+# Prod: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 services:
   postgres:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: myapp
+      POSTGRES_DB: ghostbalance
     ports:
       - "5432:5432"
     volumes:
@@ -18,33 +20,13 @@ services:
   app:
     build:
       context: .
-      target: dev
+      target: prod
     ports:
       - "${PORT:-3001}:${PORT:-3001}"
+    env_file: .env
     environment:
       NODE_OPTIONS: "--dns-result-order=ipv4first"
-      PORT: "${PORT:-3001}"
-      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/myapp"
-      ENABLE_ERRORPING: "${ENABLE_ERRORPING:-false}"
-      ERRORPING_BOT_TOKEN: "${ERRORPING_BOT_TOKEN:-}"
-      ERRORPING_CHAT_ID: "${ERRORPING_CHAT_ID:-}"
-      ERRORPING_API_KEY: "${ERRORPING_API_KEY:-}"
-      ENABLE_FEEDBACK: "${ENABLE_FEEDBACK:-false}"
-      FEEDBACK_ADMIN_KEY: "${FEEDBACK_ADMIN_KEY:-}"
-      ENABLE_STORAGE: "${ENABLE_STORAGE:-false}"
-      S3_BUCKET: "${S3_BUCKET:-}"
-      S3_REGION: "${S3_REGION:-}"
-      S3_ENDPOINT: "${S3_ENDPOINT:-}"
-      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID:-}"
-      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY:-}"
-      CORS_ORIGIN: "${CORS_ORIGIN:-*}"
-      ETH_RPC_URL: "${ETH_RPC_URL:-}"
-      MAX_BLOCK_AGE: "${MAX_BLOCK_AGE:-256}"
-      CIRCUIT_DIR: "/app/circuits"
-    volumes:
-      - ./src:/app/src
-      - ./migrations:/app/migrations
-      - ../frontend/public/circuits:/app/circuits:ro
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/ghostbalance"
     depends_on:
       postgres:
         condition: service_healthy

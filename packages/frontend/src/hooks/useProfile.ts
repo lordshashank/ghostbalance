@@ -41,13 +41,13 @@ export function useUpdateProfile() {
   });
 }
 
-export function useSuggestedUsers() {
+export function useSuggestedUsers(limit = 5) {
   const { isAuthenticated } = useAuth();
 
   return useQuery<Profile[]>({
-    queryKey: ["profiles", "suggested"],
+    queryKey: ["profiles", "suggested", limit],
     queryFn: async () => {
-      const res = await apiFetch<{ data: Profile[] }>("/profiles/suggested");
+      const res = await apiFetch<{ data: Profile[] }>(`/profiles/suggested?limit=${limit}`);
       return res.data;
     },
     enabled: isAuthenticated,

@@ -99,11 +99,14 @@ export function createProfileRoutes(config: {
     },
 
     // Get suggested profiles (must be before :nullifier route)
+    // TODO: improve suggestion algo — factor in shared follows, recent activity, randomness
     {
       method: "GET",
       path: "/profiles/suggested",
       auth: { strategy: "session" },
       handler: async (ctx) => {
+        const params = parseQueryParams(ctx.req);
+        const { limit } = parseCursor(params, 5, 20);
         const result = await ctx.db.query(
           `SELECT p.nullifier, p.bio, p.avatar_key, p.public_balance, p.follower_count
            FROM profiles p
@@ -114,9 +117,9 @@ export function createProfileRoutes(config: {
                UNION
                SELECT blocker_nullifier FROM blocks WHERE blocked_nullifier = $1
              )
-           ORDER BY p.follower_count DESC
-           LIMIT 10`,
-          [ctx.auth.userId]
+           ORDER BY p.public_balance DESC
+           LIMIT $2`,
+          [ctx.auth.userId, limit]
         );
 
         return { status: 200, json: { data: result.rows } };

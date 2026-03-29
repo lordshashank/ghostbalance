@@ -7,6 +7,8 @@ packages/frontend/out/
 packages/frontend/build/
 **/target/
 **/Prover.toml
+packages/frontend/public/circuits/
+packages/backend/circuits/
 
 # Environment
 .env

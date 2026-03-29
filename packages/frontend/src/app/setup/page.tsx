@@ -557,7 +557,7 @@ function SetupPageInner() {
               <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant/60 font-mono">ETH</span>
             </div>
             <p className="text-[11px] text-on-surface-variant/60 italic font-mono">
-              This can be less than your actual balance. Your real balance stays private.
+              This should be less than your actual balance to avoid on-chain reveal.
             </p>
           </div>
 
@@ -614,7 +614,6 @@ function SetupPageInner() {
                     <p className="text-[11px] text-on-surface-variant/80 font-mono leading-relaxed">
                       If you set a custom nullifier seed, it will be stored on this device only.
                       You must remember this exact value to recover your account on a new device.
-                      By default, your proof balance is used and stored on the server for easy recovery.
                     </p>
                   </div>
                 </div>

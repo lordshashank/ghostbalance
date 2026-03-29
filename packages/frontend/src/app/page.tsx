@@ -133,9 +133,9 @@ function FeedRightSidebar() {
 function HomeInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const feedType = (searchParams.get("feed") as "latest" | "following" | "trending") || "trending";
+  const feedType = (searchParams.get("feed") as "latest" | "following" | "trending") || "latest";
   const setFeedType = (type: string) => {
-    router.replace(type === "trending" ? "/" : `/?feed=${type}`, { scroll: false });
+    router.replace(type === "latest" ? "/" : `/?feed=${type}`, { scroll: false });
   };
   const { user, isAuthenticated } = useAuth();
   const createPost = useCreatePost();
@@ -166,8 +166,8 @@ function HomeInner() {
 
   const tabs: { label: string; value: "latest" | "following" | "trending" }[] =
     [
-      { label: "Trending", value: "trending" },
       { label: "Latest", value: "latest" },
+      { label: "Trending", value: "trending" },
       { label: "Following", value: "following" },
     ];
 

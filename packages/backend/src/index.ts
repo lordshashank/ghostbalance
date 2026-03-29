@@ -40,7 +40,7 @@ async function main() {
   const __dirname = dirname(fileURLToPath(import.meta.url));
   const zkproofConfig = config.ethRpcUrl
     ? {
-        circuitDir: config.circuitDir || resolve(__dirname, "../../frontend/public/circuits"),
+        circuitDir: config.circuitDir || resolve(__dirname, "../circuits"),
         ethRpcUrl: config.ethRpcUrl,
         maxBlockAge: config.maxBlockAge,
       }
