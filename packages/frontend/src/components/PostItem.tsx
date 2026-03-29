@@ -9,7 +9,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ShareMenu } from "@/components/ShareMenu";
 import { QuoteDialog } from "@/components/QuoteDialog";
 import type { Post } from "@/lib/types";
-import { formatBalance, formatRelativeTime, weiToEth } from "@/lib/format";
+import { formatBalance, formatCount, formatRelativeTime, weiToEth } from "@/lib/format";
 import { getTierName } from "@/lib/tiers";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -22,12 +22,6 @@ import { useToast } from "@/providers/ToastProvider";
 
 interface PostItemProps {
   post: Post;
-}
-
-function formatCount(n: number): string {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}m`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return String(n);
 }
 
 export function PostItem({ post }: PostItemProps) {
@@ -55,8 +49,10 @@ export function PostItem({ post }: PostItemProps) {
 
   const isOwn = user?.nullifier === post.author_nullifier;
 
-  useClickOutside(menuRef, useCallback(() => setMenuOpen(false), []), menuOpen);
-  useClickOutside(repostMenuRef, useCallback(() => setRepostMenuOpen(false), []), repostMenuOpen);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const closeRepostMenu = useCallback(() => setRepostMenuOpen(false), []);
+  useClickOutside(menuRef, closeMenu, menuOpen);
+  useClickOutside(repostMenuRef, closeRepostMenu, repostMenuOpen);
 
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();

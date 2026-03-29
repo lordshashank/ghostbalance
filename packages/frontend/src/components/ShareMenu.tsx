@@ -21,7 +21,8 @@ export function ShareMenu({ url, text = "", className }: ShareMenuProps) {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
-  useClickOutside(menuRef, useCallback(() => { setOpen(false); setShareSubOpen(false); }, []), open);
+  const closeMenus = useCallback(() => { setOpen(false); setShareSubOpen(false); }, []);
+  useClickOutside(menuRef, closeMenus, open);
 
   const fullUrl = typeof window !== "undefined" ? `${window.location.origin}${url}` : url;
   const encodedUrl = encodeURIComponent(fullUrl);

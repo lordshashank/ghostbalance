@@ -70,6 +70,19 @@ export function createPostRoutes(config: {
             }
             const parent = parentResult.rows[0] as { id: string; root_id: string | null; author_nullifier: string };
             rootId = parent.root_id ?? parent.id;
+
+            // Check blocks in either direction
+            if (parent.author_nullifier !== author) {
+              const blockCheck = await query(
+                `SELECT 1 FROM blocks
+                 WHERE (blocker_nullifier = $1 AND blocked_nullifier = $2)
+                    OR (blocker_nullifier = $2 AND blocked_nullifier = $1)`,
+                [author, parent.author_nullifier]
+              );
+              if (blockCheck.rows.length > 0) {
+                throw Object.assign(new Error("Blocked"), { statusCode: 403 });
+              }
+            }
           }
 
           // Verify repost target exists
@@ -80,6 +93,20 @@ export function createPostRoutes(config: {
             );
             if (repostTarget.rows.length === 0) {
               throw Object.assign(new Error("Repost target not found"), { statusCode: 404 });
+            }
+            const target = repostTarget.rows[0] as { id: string; author_nullifier: string };
+
+            // Check blocks in either direction
+            if (target.author_nullifier !== author) {
+              const blockCheck = await query(
+                `SELECT 1 FROM blocks
+                 WHERE (blocker_nullifier = $1 AND blocked_nullifier = $2)
+                    OR (blocker_nullifier = $2 AND blocked_nullifier = $1)`,
+                [author, target.author_nullifier]
+              );
+              if (blockCheck.rows.length > 0) {
+                throw Object.assign(new Error("Blocked"), { statusCode: 403 });
+              }
             }
           }
 
@@ -137,6 +164,13 @@ export function createPostRoutes(config: {
           // Attach media
           if (attachments && attachments.length > 0) {
             for (let i = 0; i < attachments.length; i++) {
+              const valid = await query(
+                `SELECT key FROM uploads WHERE key = $1 AND user_id = $2 AND status = 'completed'`,
+                [attachments[i], author]
+              );
+              if (valid.rows.length === 0) {
+                throw Object.assign(new Error("Invalid or unowned attachment"), { statusCode: 400 });
+              }
               await query(
                 `INSERT INTO post_attachments (id, post_id, upload_key, position)
                  VALUES (gen_random_uuid(), $1, $2, $3)`,
@@ -255,6 +289,8 @@ export function createPostRoutes(config: {
         queryParams.push(limit + 1);
         const limitParam = paramIdx++;
 
+        // NOTE: p.* exposes all post columns in the API response. When adding new columns
+        // to the posts table, verify they should be public. If not, switch to explicit column names.
         const sql = `SELECT p.*, pr.public_balance, pr.avatar_key${viewerSelect}
                FROM posts p
                JOIN profiles pr ON p.author_nullifier = pr.nullifier

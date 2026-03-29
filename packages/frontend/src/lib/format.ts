@@ -29,6 +29,12 @@ export function formatRelativeTime(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString();
 }
 
+export function formatCount(n: number): string {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}m`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
+}
+
 export function truncateNullifier(nullifier: string, chars = 8): string {
   if (nullifier.length <= chars * 2 + 2) return nullifier;
   return `${nullifier.slice(0, chars + 2)}...${nullifier.slice(-chars)}`;

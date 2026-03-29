@@ -142,6 +142,8 @@ export function createProfileRoutes(config: {
           viewerSelect = ", (vf.follower_nullifier IS NOT NULL) AS viewer_following";
         }
 
+        // NOTE: p.* exposes all profile columns in the API response. When adding new columns
+        // to the profiles table, verify they should be public. If not, switch to explicit column names.
         const result = await ctx.db.query(
           `SELECT p.*${viewerSelect}
            FROM profiles p

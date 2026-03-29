@@ -18,7 +18,6 @@ export function createConversationRoutes(config: {
 
       if (isGroup) {
         // --- Group conversation ---
-        // TODO: check blocks for each participant (currently only enforced on 1:1 DMs)
         // TODO: add leave-group / remove-member endpoints
         const participants = ctx.body.participants as string[] | undefined;
         const name = (ctx.body.name as string | undefined) || null;
@@ -32,6 +31,19 @@ export function createConversationRoutes(config: {
             status: 400,
             json: { error: "participants must be an array with at least 1 member" },
           };
+        }
+
+        // Check blocks between creator and each participant
+        for (const participant of participants) {
+          const blockCheck = await ctx.db.query(
+            `SELECT 1 FROM blocks
+             WHERE (blocker_nullifier = $1 AND blocked_nullifier = $2)
+                OR (blocker_nullifier = $2 AND blocked_nullifier = $1)`,
+            [me, participant]
+          );
+          if (blockCheck.rows.length > 0) {
+            return { status: 403, json: { error: "Cannot add a blocked user to a conversation" } };
+          }
         }
 
         const conversation = await ctx.db.transaction(async (query: QueryFn) => {
@@ -311,6 +323,16 @@ export function createConversationRoutes(config: {
       );
       if (membership.rows.length === 0) {
         return { status: 403, json: { error: "Not a member of this conversation" } };
+      }
+
+      if (attachmentKey) {
+        const valid = await ctx.db.query(
+          `SELECT key FROM uploads WHERE key = $1 AND user_id = $2 AND status = 'completed'`,
+          [attachmentKey, me]
+        );
+        if (valid.rows.length === 0) {
+          return { status: 400, json: { error: "Invalid or unowned attachment" } };
+        }
       }
 
       const message = await ctx.db.transaction(async (query: QueryFn) => {

@@ -42,8 +42,10 @@ export function Sidebar() {
             ? pathname === "/"
             : pathname.startsWith(item.href);
 
-          const isNotifications = item.href === "/notifications";
-          const isMessages = item.href === "/conversations";
+          const badgeCount =
+            item.href === "/notifications" ? unread?.count :
+            item.href === "/conversations" ? unreadConversations?.count :
+            0;
 
           return (
             <Link
@@ -59,24 +61,13 @@ export function Sidebar() {
               <Icon name={item.icon} filled={isActive} />
               <span className="hidden lg:inline font-medium">{item.label}</span>
 
-              {/* Full badge — visible lg+ */}
-              {isNotifications && unread && unread.count > 0 && (
-                <span className="hidden lg:inline ml-auto bg-primary text-black text-[10px] font-bold px-1.5 py-0.5 min-w-[20px] text-center">
-                  {unread.count}
-                </span>
-              )}
-              {isMessages && unreadConversations && unreadConversations.count > 0 && (
-                <span className="hidden lg:inline ml-auto bg-primary text-black text-[10px] font-bold px-1.5 py-0.5 min-w-[20px] text-center">
-                  {unreadConversations.count}
-                </span>
-              )}
-
-              {/* Dot badge — visible md to lg (icon-only mode) */}
-              {isNotifications && unread && unread.count > 0 && (
-                <span className="hidden md:block lg:hidden absolute top-2 right-2 w-2.5 h-2.5 bg-primary rounded-full" />
-              )}
-              {isMessages && unreadConversations && unreadConversations.count > 0 && (
-                <span className="hidden md:block lg:hidden absolute top-2 right-2 w-2.5 h-2.5 bg-primary rounded-full" />
+              {badgeCount != null && badgeCount > 0 && (
+                <>
+                  <span className="hidden lg:inline ml-auto bg-primary text-black text-[10px] font-bold px-1.5 py-0.5 min-w-[20px] text-center">
+                    {badgeCount}
+                  </span>
+                  <span className="hidden md:block lg:hidden absolute top-2 right-2 w-2.5 h-2.5 bg-primary rounded-full" />
+                </>
               )}
             </Link>
           );

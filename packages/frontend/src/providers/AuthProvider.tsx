@@ -132,7 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = useCallback(async () => {
     const profile = await rawGet<Profile>("/auth/me");
-    setUser(profile);
+    setUser((prev) => {
+      if (prev && profile && prev.nullifier === profile.nullifier && prev.public_balance === profile.public_balance && prev.bio === profile.bio && prev.avatar_key === profile.avatar_key) return prev;
+      return profile;
+    });
   }, []);
 
   const logout = useCallback(async () => {

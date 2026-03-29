@@ -27,7 +27,8 @@ export function MobileNav() {
   const { data: unreadConversations } = useUnreadConversationsCount();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
-  useClickOutside(moreRef, useCallback(() => setMoreOpen(false), []), moreOpen);
+  const closeMore = useCallback(() => setMoreOpen(false), []);
+  useClickOutside(moreRef, closeMore, moreOpen);
 
   return (
     <>
