@@ -5,8 +5,8 @@ use eth_primitives::types::Bytes32;
 use eth_primitives::bytes::{right_pad, bytes_to_nibbles};
 use eth_primitives::fragment::Fragment;
 
-// Maximum supported MPT depth. Ethereum state trie depth is bounded by
-// log16(accounts): depth Capped at 9
+// Maximum supported MPT depth. Depth 9 (8 internal nodes + 1 leaf) covers
+// all realistic mainnet accounts. B2 handles nodes 0-3, B3 handles nodes 4-7.
 global MAX_SUPPORTED_DEPTH: u64 = 9;
 
 fn main(
@@ -29,7 +29,8 @@ fn main(
     account_code_hash: Bytes32,
 ) {
     // Enforce depth cap. B2 covers nodes 0-3, B3 covers nodes 4-7; together
-    assert(depth <= MAX_SUPPORTED_DEPTH, "MPT depth exceeds supported maximum of 8");
+    // they handle all internal nodes for depth <= 9 (max 8 internal nodes, indices 0-7).
+    assert(depth <= MAX_SUPPORTED_DEPTH, "MPT depth exceeds supported maximum");
 
     // 1. Verify incoming link
     assert(

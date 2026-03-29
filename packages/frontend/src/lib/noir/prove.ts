@@ -267,10 +267,14 @@ export async function generateShardedProof(
   const linkOut3 = parseReturnField(resultB3.returnValue);
   console.log(`[prove:B3] link_out=${linkOut3}`);
 
-  // --- Execute Circuit B4 (final: remaining nodes + leaf + account) ---
+  // --- Execute Circuit B4 (final: leaf + account) ---
   onStatus?.("[6/12] Executing Circuit B4 (balance final)...");
 
-  // Replay MPT path through nodes 0-7
+  if (depth > 9) {
+    throw new Error(`MPT proof depth ${depth} exceeds supported maximum of 9`);
+  }
+
+  // Replay MPT path through all internal nodes to get the leaf's parent hash
   const afterB3 = replayMptPath(
     proofData.header.stateRoot,
     proofData.addressHash,
@@ -279,17 +283,6 @@ export async function generateShardedProof(
     Math.min(8, internalNodes.length)
   );
   console.log(`[prove:B4] After B3 replay: keyPtr=${afterB3.keyPtr}`);
-
-  // Remaining internal nodes (indices 8-9)
-  const nodesB4: string[][] = [];
-  for (let i = 0; i < 2; i++) {
-    const idx = 8 + i;
-    if (idx < internalNodes.length) {
-      nodesB4.push(toByteStrings(padNode(internalNodes[idx], MAX_NODE_LEN)));
-    } else {
-      nodesB4.push(Array(MAX_NODE_LEN).fill("0x00"));
-    }
-  }
 
   const leafPadded = padLeaf(proofData.mpt.leaf, MAX_ACCOUNT_LEAF_LEN);
   const accountValuePadded = leftPad(proofData.account.rlpBytes, MAX_ACCOUNT_STATE_LEN);
@@ -303,7 +296,6 @@ export async function generateShardedProof(
     nullifier_seed: nullifierSeed.toString(),
     blinding,
     depth: depth.toString(),
-    nodes: nodesB4,
     leaf: toByteStrings(leafPadded),
     account_value: toByteStrings(accountValuePadded),
     account_nonce: proofData.account.nonce.toString(),

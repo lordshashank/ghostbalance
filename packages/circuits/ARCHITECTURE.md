@@ -12,7 +12,7 @@ UltraHonk circuits are padded to the next power-of-2 size. bb.js WASM in the bro
 | B1: `balance_header` | 218,599 | 2^18 (262K) | Block header RLP verify, block hash, state root extraction |
 | B2: `balance_mpt_step` | 425,077 | 2^19 (524K) | MPT traversal nodes 0-3 |
 | B3: `balance_mpt_step` | 425,077 | 2^19 (524K) | MPT traversal nodes 4-7 (same circuit, different inputs) |
-| B4: `balance_final` | 70,606 | 2^17 (131K) | Leaf verification, account RLP, balance assertion (depth capped at 8) |
+| B4: `balance_final` | 70,606 | 2^17 (131K) | Leaf verification, account RLP, balance assertion (depth capped at 9) |
 
 Gate counts measured with `bb gates` (UltraHonk scheme). The largest circuit (B2/B3) uses 434K of the 524K available gates at 2^19.
 
@@ -68,7 +68,7 @@ Gate counts measured with `bb gates` (UltraHonk scheme). The largest circuit (B2
                     |   Circuit B4          |
                     |   balance_final       |
                     |                       |
-                    |  depth assert (<= 8)  |
+                    |  depth assert (<= 9)  |
                     |  leaf verification    |
                     |  account RLP decode   |
                     |  balance >= threshold |

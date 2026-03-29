@@ -414,14 +414,14 @@ async function main() {
   }
 
   // =========================================================================
-  // Phase B4: Balance Final (leaf only -- depth capped at 8, no nodes 8-9)
+  // Phase B4: Balance Final (leaf only -- depth capped at 9)
   // =========================================================================
   log('');
   log('=== Phase B4: Balance Final ===');
 
   // Replay MPT path through all internal nodes (0 to depth-2) to get the
-  // hash that the leaf will be verified against. B3 ends at node index 6 max
-  // (depth <= 8 means at most 7 internal nodes, indices 0-6).
+  // hash that the leaf will be verified against. B3 ends at node index 7 max
+  // (depth <= 9 means at most 8 internal nodes, indices 0-7).
   const afterB3 = replayMptPath(
     proofData.header.stateRoot,
     proofData.addressHash,
@@ -498,7 +498,7 @@ async function main() {
   log('    - MPT node hash verification (4 nodes)');
   log('  Circuit B4 (balance_final):');
   log('    - Link commitment from B3');
-  log('    - Leaf verification (depth capped at 8, nodes 8-9 removed)');
+  log('    - Leaf verification (depth capped at 9)');
   log('    - Account RLP decoding');
   log('    - Balance assertions');
   if (PROVE_MODE) {
