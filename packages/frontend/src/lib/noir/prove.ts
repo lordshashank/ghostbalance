@@ -1,6 +1,6 @@
 import { Noir } from "@noir-lang/noir_js";
 import type { CompiledCircuit, InputMap } from "@noir-lang/types";
-import { UltraHonkBackend } from "@aztec/bb.js";
+import { UltraHonkBackend, Barretenberg } from "@aztec/bb.js";
 import type { ProofData } from "@aztec/bb.js";
 import { patchCrsFetch } from "./crsProxy";
 import { replayMptPath, padNode, padLeaf, leftPad } from "./mptReplay";
@@ -318,68 +318,47 @@ export async function generateShardedProof(
 
   patchCrsFetch();
 
+  const api = await Barretenberg.new({ threads: 1 });
+
+  try {
+
   // --- Prove Circuit A ---
   onStatus?.("[7/12] Proving Circuit A (identity)...");
   t0 = performance.now();
-  const backendA = new UltraHonkBackend(circuitA.bytecode, { threads: 1 });
-  let proofDataA: ProofData;
-  try {
-    proofDataA = await backendA.generateProof(resultA.witness);
-  } finally {
-    await backendA.destroy();
-  }
+  const backendA = new UltraHonkBackend(circuitA.bytecode, api);
+  const proofDataA = await backendA.generateProof(resultA.witness);
   const timeA = ((performance.now() - t0) / 1000).toFixed(1);
   console.log(`[prove:A] Proof: ${timeA}s, size=${proofDataA.proof.length}, pub=${proofDataA.publicInputs.length}`);
 
   // --- Prove Circuit B1 ---
   onStatus?.("[8/12] Proving Circuit B1 (header)...");
   t0 = performance.now();
-  const backendB1 = new UltraHonkBackend(circuitB1.bytecode, { threads: 1 });
-  let proofDataB1: ProofData;
-  try {
-    proofDataB1 = await backendB1.generateProof(resultB1.witness);
-  } finally {
-    await backendB1.destroy();
-  }
+  const backendB1 = new UltraHonkBackend(circuitB1.bytecode, api);
+  const proofDataB1 = await backendB1.generateProof(resultB1.witness);
   const timeB1 = ((performance.now() - t0) / 1000).toFixed(1);
   console.log(`[prove:B1] Proof: ${timeB1}s, size=${proofDataB1.proof.length}, pub=${proofDataB1.publicInputs.length}`);
 
   // --- Prove Circuit B2 ---
   onStatus?.("[9/12] Proving Circuit B2 (MPT step 1)...");
   t0 = performance.now();
-  const backendB2 = new UltraHonkBackend(circuitB2.bytecode, { threads: 1 });
-  let proofDataB2: ProofData;
-  try {
-    proofDataB2 = await backendB2.generateProof(resultB2.witness);
-  } finally {
-    await backendB2.destroy();
-  }
+  const backendB2 = new UltraHonkBackend(circuitB2.bytecode, api);
+  const proofDataB2 = await backendB2.generateProof(resultB2.witness);
   const timeB2 = ((performance.now() - t0) / 1000).toFixed(1);
   console.log(`[prove:B2] Proof: ${timeB2}s, size=${proofDataB2.proof.length}, pub=${proofDataB2.publicInputs.length}`);
 
   // --- Prove Circuit B3 ---
   onStatus?.("[10/12] Proving Circuit B3 (MPT step 2)...");
   t0 = performance.now();
-  const backendB3 = new UltraHonkBackend(circuitB2.bytecode, { threads: 1 });
-  let proofDataB3: ProofData;
-  try {
-    proofDataB3 = await backendB3.generateProof(resultB3.witness);
-  } finally {
-    await backendB3.destroy();
-  }
+  const backendB3 = new UltraHonkBackend(circuitB2.bytecode, api);
+  const proofDataB3 = await backendB3.generateProof(resultB3.witness);
   const timeB3 = ((performance.now() - t0) / 1000).toFixed(1);
   console.log(`[prove:B3] Proof: ${timeB3}s, size=${proofDataB3.proof.length}, pub=${proofDataB3.publicInputs.length}`);
 
   // --- Prove Circuit B4 ---
   onStatus?.("[11/12] Proving Circuit B4 (balance final)...");
   t0 = performance.now();
-  const backendB4 = new UltraHonkBackend(circuitB4.bytecode, { threads: 1 });
-  let proofDataB4: ProofData;
-  try {
-    proofDataB4 = await backendB4.generateProof(resultB4.witness);
-  } finally {
-    await backendB4.destroy();
-  }
+  const backendB4 = new UltraHonkBackend(circuitB4.bytecode, api);
+  const proofDataB4 = await backendB4.generateProof(resultB4.witness);
   const timeB4 = ((performance.now() - t0) / 1000).toFixed(1);
   console.log(`[prove:B4] Proof: ${timeB4}s, size=${proofDataB4.proof.length}, pub=${proofDataB4.publicInputs.length}`);
 
@@ -399,4 +378,8 @@ export async function generateShardedProof(
     proofB4: proofDataB4.proof,
     publicInputsB4: proofDataB4.publicInputs,
   };
+
+  } finally {
+    await api.destroy();
+  }
 }

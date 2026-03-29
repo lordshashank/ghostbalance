@@ -95,7 +95,8 @@ export async function POST(request: Request) {
     const bytecodeB2 = loadBytecode("balance_mpt_step");
     const bytecodeB4 = loadBytecode("balance_final");
 
-    const { UltraHonkBackend } = await import("@aztec/bb.js");
+    const { UltraHonkBackend, Barretenberg } = await import("@aztec/bb.js");
+    const api = await Barretenberg.new();
 
     // Verify all 5 proofs
     const proofs = [
@@ -106,23 +107,22 @@ export async function POST(request: Request) {
       { name: "B4", bytecode: bytecodeB4, proof: proofB4, publicInputs: publicInputsB4 },
     ];
 
-    for (const p of proofs) {
-      const backend = new UltraHonkBackend(p.bytecode);
-      let valid: boolean;
-      try {
-        valid = await backend.verifyProof({
+    try {
+      for (const p of proofs) {
+        const backend = new UltraHonkBackend(p.bytecode, api);
+        const valid = await backend.verifyProof({
           proof: new Uint8Array(p.proof),
           publicInputs: p.publicInputs,
         });
-      } finally {
-        await backend.destroy();
+        if (!valid) {
+          return NextResponse.json(
+            { valid: false, error: `Proof ${p.name} verification failed` },
+            { status: 200 }
+          );
+        }
       }
-      if (!valid) {
-        return NextResponse.json(
-          { valid: false, error: `Proof ${p.name} verification failed` },
-          { status: 200 }
-        );
-      }
+    } finally {
+      await api.destroy();
     }
 
     // Cross-check link chain

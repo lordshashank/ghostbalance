@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@noble/curves": "^1.4.0",
-    "@aztec/bb.js": "3.0.0-nightly.20251104",
+    "@aztec/bb.js": "3.0.0-nightly.20260102",
     "viem": "^2.10.1"
   }
 }

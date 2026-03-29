@@ -156,7 +156,8 @@ async function verifyAllProofs(
   bundle: ProofBundle,
   bytecodes: ReturnType<typeof loadAllBytecodes>
 ): Promise<{ valid: boolean; error?: string }> {
-  const { UltraHonkBackend } = await import("@aztec/bb.js");
+  const { UltraHonkBackend, Barretenberg } = await import("@aztec/bb.js");
+  const api = await Barretenberg.new();
 
   const proofs = [
     { name: "A", bytecode: bytecodes.A, proof: bundle.proofA, publicInputs: bundle.publicInputsA },
@@ -166,23 +167,21 @@ async function verifyAllProofs(
     { name: "B4", bytecode: bytecodes.B4, proof: bundle.proofB4, publicInputs: bundle.publicInputsB4 },
   ];
 
-  for (const p of proofs) {
-    const backend = new UltraHonkBackend(p.bytecode);
-    let valid: boolean;
-    try {
-      valid = await backend.verifyProof({
+  try {
+    for (const p of proofs) {
+      const backend = new UltraHonkBackend(p.bytecode, api);
+      const valid = await backend.verifyProof({
         proof: new Uint8Array(p.proof),
         publicInputs: p.publicInputs,
       });
-    } catch (err) {
-      await backend.destroy();
-      return { valid: false, error: `Proof ${p.name} verification error: ${err instanceof Error ? err.message : String(err)}` };
-    } finally {
-      await backend.destroy();
+      if (!valid) {
+        return { valid: false, error: `Proof ${p.name} verification failed` };
+      }
     }
-    if (!valid) {
-      return { valid: false, error: `Proof ${p.name} verification failed` };
-    }
+  } catch (err) {
+    return { valid: false, error: `Proof verification error: ${err instanceof Error ? err.message : String(err)}` };
+  } finally {
+    await api.destroy();
   }
 
   return { valid: true };
