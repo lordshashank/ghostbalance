@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
 import { ErrorPingWrapper } from "@/providers/ErrorPingProvider";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -78,6 +79,7 @@ export default function RootLayout({
             </Web3Provider>
           </ThemeProvider>
         </ErrorPingWrapper>
+        <Analytics />
       </body>
     </html>
   );
