@@ -15,18 +15,22 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const siteUrl = "https://ghostbalance.chat";
-const description = "The only social network where your balance speaks but your identity stays hidden.";
+const tagline = "The only social network where your balance speaks but your identity stays hidden.";
 
 export const metadata: Metadata = {
   title: {
     default: "GhostBalance",
     template: "%s | GhostBalance",
   },
-  description,
+  description: tagline,
   metadataBase: new URL(siteUrl),
+  applicationName: "GhostBalance",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "GhostBalance",
-    description,
+    description: tagline,
     url: siteUrl,
     siteName: "GhostBalance",
     type: "website",
@@ -35,13 +39,48 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "GhostBalance",
-    description,
+    description: tagline,
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+    },
   },
-  keywords: ["zk", "zero knowledge", "ethereum", "anonymous", "social", "proof of balance"],
+  keywords: [
+    "GhostBalance",
+    "anonymous social network",
+    "zero knowledge proofs",
+    "zk proofs",
+    "ethereum",
+    "proof of balance",
+    "private social",
+    "web3 social",
+    "Noir circuits",
+  ],
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: "GhostBalance",
+      url: siteUrl,
+      description: tagline,
+      inLanguage: "en",
+    },
+    {
+      "@type": "Organization",
+      name: "GhostBalance",
+      url: siteUrl,
+      logo: `${siteUrl}/logo.svg`,
+    },
+  ],
 };
 
 // Inline script to prevent FOUC. Sets critical CSS variables from localStorage
@@ -91,6 +130,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body className={`${spaceGrotesk.variable} font-sans antialiased`}>
         <div className="grain-overlay" />

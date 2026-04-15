@@ -28,6 +28,7 @@ export function WelcomeDialog() {
       className="absolute inset-0 z-[110] flex items-start justify-center p-4 bg-black/10 backdrop-blur-sm"
       style={{ minHeight: "100%" }}
       onClick={dismiss}
+      data-nosnippet
     >
       <div
         className="glass-panel max-w-sm w-full p-8 mt-32 shadow-2xl border-primary/20 border animate-in fade-in zoom-in duration-500"
