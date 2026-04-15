@@ -20,12 +20,21 @@ import { getTierName } from "@/lib/tiers";
 import { weiToEth } from "@/lib/format";
 
 function FeedRightSidebar() {
+  const { isAuthenticated } = useAuth();
   const suggested = useSuggestedUsers();
   const leaderboard = useLeaderboard("balance");
   const follow = useFollow();
 
-  const leaderboardEntries =
-    leaderboard.data?.pages?.flatMap((p) => p.data)?.slice(0, 2) ?? [];
+  const leaderboardAll =
+    leaderboard.data?.pages?.flatMap((p) => p.data) ?? [];
+  const leaderboardEntries = leaderboardAll.slice(0, 2);
+
+  const whoToFollow = isAuthenticated
+    ? (suggested.data ?? [])
+    : leaderboardAll.slice(0, 3);
+  const whoToFollowLoading = isAuthenticated
+    ? suggested.isLoading
+    : leaderboard.isLoading;
 
   return (
     <>
@@ -35,17 +44,17 @@ function FeedRightSidebar() {
           Who to Follow
         </h3>
         <div className="space-y-4">
-          {suggested.isLoading && (
+          {whoToFollowLoading && (
             <p className="text-xs font-mono text-on-surface-variant/60">
               Loading...
             </p>
           )}
-          {suggested.data && suggested.data.length === 0 && (
+          {!whoToFollowLoading && whoToFollow.length === 0 && (
             <p className="text-xs font-mono text-on-surface-variant/60">
               No suggestions right now
             </p>
           )}
-          {suggested.data?.map((u) => (
+          {whoToFollow.map((u) => (
             <div
               key={u.nullifier}
               className="flex items-center justify-between group"
