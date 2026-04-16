@@ -139,8 +139,17 @@ function FeedRightSidebar() {
       </section>
 
       {/* Footer */}
-      <footer className="mt-8 px-4 font-mono text-[10px] text-on-surface-variant/50 uppercase">
+      <footer className="mt-8 px-4 font-mono text-[10px] text-on-surface-variant/50 uppercase space-y-1">
         <p>&copy; 2026 ghostbalance.chat</p>
+        <a
+          href="https://x.com/0xlord_forever/status/2044417779957469217?s=20"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-primary transition-colors inline-flex items-center gap-1"
+        >
+          Follow us on X
+          <Icon name="open_in_new" className="!text-[10px]" />
+        </a>
       </footer>
     </>
   );
